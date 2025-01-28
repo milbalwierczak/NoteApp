@@ -85,18 +85,26 @@ app.get("/posts/:id", (req, res) => {
 });
 
 // POST a new post
-app.post("/posts", (req, res) => {
-  const newId = lastId += 1;
-  const post = {
-    id: newId,
-    title: req.body.title,
-    content: req.body.content,
-    author: req.body.author,
-    date: new Date(),
-  };
-  lastId = newId;
-  posts.push(post);
-  res.status(201).json(post);
+app.post("/posts", async (req, res) => {
+  const { title, content } = req.body;
+
+  
+  const query = `
+    INSERT INTO notes (title, content, user_id)
+    VALUES ('${title}', '${content}', 1)
+    RETURNING id, title, content, user_id;
+  `;
+
+  try {
+    const result = await db.query(query);
+
+    const newPost = result.rows[0];
+    res.status(201).json(newPost);
+
+  } catch (error) {
+    console.error("Error creating post:", error);
+    res.status(500).json({ message: "Error creating post" });
+  }
 });
 
 // PATCH a post when you just want to update one parameter
@@ -112,12 +120,21 @@ app.patch("/posts/:id", (req, res) => {
 });
 
 // DELETE a specific post by providing the post id
-app.delete("/posts/:id", (req, res) => {
-  const index = posts.findIndex((p) => p.id === parseInt(req.params.id));
-  if (index === -1) return res.status(404).json({ message: "Post not found" });
+app.delete("/posts/:id", async (req, res) => {
+  const { id } = req.params;
 
-  posts.splice(index, 1);
-  res.json({ message: "Post deleted" });
+  try {
+    const result = await db.query("DELETE FROM notes WHERE id = $1 RETURNING id", [id]);
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+
+    res.status(200).json({ message: "Post deleted successfully", id });
+  } catch (error) {
+    console.error("Error deleting post:", error);
+    res.status(500).json({ message: "Error deleting post" });
+  }
 });
 
 app.listen(port, () => {
