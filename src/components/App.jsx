@@ -109,6 +109,7 @@ function App() {
   }
 
   function logout() {
+    setNotes([]);
     localStorage.removeItem("token");
     setUser(null);
   }

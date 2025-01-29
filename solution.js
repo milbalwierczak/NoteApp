@@ -108,18 +108,19 @@ app.get("/me", authenticateToken, (req, res) => {
 });
 
 // POST a new post
-app.post("/posts", async (req, res) => {
+app.post("/posts", authenticateToken, async (req, res) => {
   const { title, content } = req.body;
+  const userId = req.user.id; // Zmienna `id` pochodzi z `req.user` (danych użytkownika z tokena)
 
-  
+  // Zabezpieczenie przed SQL Injection:
   const query = `
     INSERT INTO notes (title, content, user_id)
-    VALUES ('${title}', '${content}', 1)
+    VALUES ($1, $2, $3)
     RETURNING id, title, content, user_id;
   `;
 
   try {
-    const result = await db.query(query);
+    const result = await db.query(query, [title, content, userId]);
 
     const newPost = result.rows[0];
     res.status(201).json(newPost);
