@@ -132,13 +132,29 @@ app.post("/posts", authenticateToken, async (req, res) => {
 });
 
 // DELETE a specific post by providing the post id
-app.delete("/posts/:id", async (req, res) => {
+app.delete("/posts/:id", authenticateToken, async (req, res) => {
   const { id } = req.params;
+  const userId = req.user.id; // Id użytkownika z tokena
 
   try {
-    const result = await db.query("DELETE FROM notes WHERE id = $1 RETURNING id", [id]);
+    // Sprawdź, czy notatka należy do zalogowanego użytkownika
+    const postResult = await db.query("SELECT * FROM notes WHERE id = $1", [id]);
 
-    if (result.rowCount === 0) {
+    if (postResult.rowCount === 0) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+
+    const post = postResult.rows[0];
+
+    // Jeśli user_id notatki różni się od id użytkownika, zwróć błąd
+    if (post.user_id !== userId) {
+      return res.status(403).json({ message: "You can only delete your own posts" });
+    }
+
+    // Usuń notatkę
+    const deleteResult = await db.query("DELETE FROM notes WHERE id = $1 RETURNING id", [id]);
+
+    if (deleteResult.rowCount === 0) {
       return res.status(404).json({ message: "Post not found" });
     }
 
