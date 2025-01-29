@@ -31,15 +31,29 @@ function App() {
   useEffect(() => {
     async function fetchNotes() {
       try {
-        const response = await axios.get(`${API_URL}/posts`);
+        const token = localStorage.getItem("token"); // Pobranie tokena
+        console.log("Token wysyłany do API:", token);
+    
+        const response = await axios.get("http://localhost:4000/posts", {
+          headers: {
+            Authorization: `Bearer ${token}`, // Wysyłanie tokena w nagłówku
+          },
+        });
+    
+        console.log("Notatki pobrane:", response.data);
         setNotes(response.data);
       } catch (error) {
-        console.error("Error fetching notes: ", error);
+        console.error("Error fetching notes:", error);
       }
     }
 
-    fetchNotes();
-  }, []);
+    console.log(user);
+
+    if (user !== null) {  // Sprawdzenie czy user istnieje
+      fetchNotes();
+    }
+
+  }, [user]);
 
   async function addNote(newNote) {
     try {
@@ -82,9 +96,12 @@ function App() {
 
   async function login(username, password) {
     try {
-      const response = await axios.post(`${API_URL}/login`, { username, password });
-      localStorage.setItem("token", response.data.token);
-      setUser(response.data);
+      const response = await axios.post(`${API_URL}/login`, { username, password });    
+      
+      const { token, user } = response.data;  // Pobranie tokena i użytkownika
+      localStorage.setItem("token", token);   // Zapis tokena
+
+      setUser(user);
       console.log("Logged in!");
     } catch (error) {
       console.error("Error logging in:", error);

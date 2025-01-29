@@ -25,12 +25,16 @@ app.use(bodyParser.json());
 
 // Middleware do autoryzacji
 function authenticateToken(req, res, next) {
-  const token = req.header("Authorization")?.split(" ")[1];
-  if (!token) return res.status(401).json({ message: "Unauthorized" });
+  const token = req.headers.authorization?.split(" ")[1]; // Pobiera token z "Bearer <token>"
+
+  if (!token) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
 
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-    if (err) return res.status(403).json({ message: "Invalid token" });
-    req.user = user;
+    if (err) return res.status(403).json({ message: "Forbidden" });
+
+    req.user = user; // Przekazujemy użytkownika do kolejnych middleware
     next();
   });
 }
@@ -71,12 +75,23 @@ app.post("/login", async (req, res) => {
       return res.status(401).json({ message: "Invalid username or password" });
     }
 
-    res.json({ message: "Login successful", user: { id: user.rows[0].id, username: user.rows[0].username } });
+    const token = jwt.sign(
+      { id: user.rows[0].id, username: user.rows[0].username },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+
+    res.json({
+      message: "Login successful",
+      user: { id: user.rows[0].id, username: user.rows[0].username },
+      token,
+    });
   } catch (error) {
     console.error("Database error:", error);
     res.status(500).json({ message: "Error logging in" });
   }
 });
+
 // Zabezpieczone pobieranie notatek
 app.get("/posts", authenticateToken, async (req, res) => {
   try {
