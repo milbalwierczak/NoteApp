@@ -23,9 +23,9 @@ const corsOptions = { origin: "http://localhost:5173" };
 app.use(cors(corsOptions));
 app.use(bodyParser.json());
 
-// Middleware do autoryzacji
+// Authorization middleware
 function authenticateToken(req, res, next) {
-  const token = req.headers.authorization?.split(" ")[1]; // Pobiera token z "Bearer <token>"
+  const token = req.headers.authorization?.split(" ")[1];
 
   if (!token) {
     return res.status(401).json({ message: "Unauthorized" });
@@ -34,12 +34,12 @@ function authenticateToken(req, res, next) {
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
     if (err) return res.status(403).json({ message: "Forbidden" });
 
-    req.user = user; // Przekazujemy użytkownika do kolejnych middleware
+    req.user = user;
     next();
   });
 }
 
-// Rejestracja
+// User register
 app.post("/register", async (req, res) => {
   const { username, password } = req.body;
 
@@ -68,9 +68,8 @@ app.post("/register", async (req, res) => {
   }
 });
 
-// Logowanie
+// Logging in user
 app.post("/login", async (req, res) => {
-  console.log("Login request received:", req.body); // Sprawdź, co przychodzi z frontendu
 
   const { username, password } = req.body;
   if (!username || !password) {
@@ -108,7 +107,7 @@ app.post("/login", async (req, res) => {
   }
 });
 
-// Zabezpieczone pobieranie notatek
+// Getting logged user notes
 app.get("/posts", authenticateToken, async (req, res) => {
   try {
     const result = await db.query("SELECT * FROM notes WHERE user_id = $1", [req.user.id]);
@@ -118,17 +117,16 @@ app.get("/posts", authenticateToken, async (req, res) => {
   }
 });
 
-// Pobieranie danych zalogowanego użytkownika
+// Getting logged user data
 app.get("/me", authenticateToken, (req, res) => {
   res.json(req.user);
 });
 
-// POST a new post
+// Add new note
 app.post("/posts", authenticateToken, async (req, res) => {
   const { title, content } = req.body;
-  const userId = req.user.id; // Zmienna `id` pochodzi z `req.user` (danych użytkownika z tokena)
+  const userId = req.user.id;
 
-  // Zabezpieczenie przed SQL Injection:
   const query = `
     INSERT INTO notes (title, content, user_id)
     VALUES ($1, $2, $3)
@@ -150,10 +148,9 @@ app.post("/posts", authenticateToken, async (req, res) => {
 // DELETE a specific post by providing the post id
 app.delete("/posts/:id", authenticateToken, async (req, res) => {
   const { id } = req.params;
-  const userId = req.user.id; // Id użytkownika z tokena
+  const userId = req.user.id;
 
   try {
-    // Sprawdź, czy notatka należy do zalogowanego użytkownika
     const postResult = await db.query("SELECT * FROM notes WHERE id = $1", [id]);
 
     if (postResult.rowCount === 0) {
@@ -162,12 +159,10 @@ app.delete("/posts/:id", authenticateToken, async (req, res) => {
 
     const post = postResult.rows[0];
 
-    // Jeśli user_id notatki różni się od id użytkownika, zwróć błąd
     if (post.user_id !== userId) {
       return res.status(403).json({ message: "You can only delete your own posts" });
     }
 
-    // Usuń notatkę
     const deleteResult = await db.query("DELETE FROM notes WHERE id = $1 RETURNING id", [id]);
 
     if (deleteResult.rowCount === 0) {

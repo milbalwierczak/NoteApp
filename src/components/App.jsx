@@ -12,7 +12,6 @@ function App() {
   const [user, setUser] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
 
-  // Pobieramy token z localStorage
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
@@ -32,12 +31,12 @@ function App() {
   useEffect(() => {
     async function fetchNotes() {
       try {
-        const token = localStorage.getItem("token"); // Pobranie tokena
+        const token = localStorage.getItem("token");
         console.log("Token wysyłany do API:", token);
     
         const response = await axios.get("http://localhost:4000/posts", {
           headers: {
-            Authorization: `Bearer ${token}`, // Wysyłanie tokena w nagłówku
+            Authorization: `Bearer ${token}`,
           },
         });
     
@@ -50,7 +49,7 @@ function App() {
 
     console.log(user);
 
-    if (user !== null) {  // Sprawdzenie czy user istnieje
+    if (user !== null) {
       fetchNotes();
     }
 
