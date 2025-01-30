@@ -160,3 +160,11 @@ form.create-note button {
   margin-bottom: 5px;
   text-align: center;
 }
+
+.success {
+  color: green;
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 5px;
+  text-align: center;
+}

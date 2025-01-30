@@ -11,6 +11,7 @@ function App() {
   const [notes, setNotes] = useState([]);
   const [user, setUser] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -32,7 +33,6 @@ function App() {
     async function fetchNotes() {
       try {
         const token = localStorage.getItem("token");
-        console.log("Token wysyłany do API:", token);
     
         const response = await axios.get("http://localhost:4000/posts", {
           headers: {
@@ -40,14 +40,11 @@ function App() {
           },
         });
     
-        console.log("Notatki pobrane:", response.data);
         setNotes(response.data);
       } catch (error) {
         console.error("Error fetching notes:", error);
       }
     }
-
-    console.log(user);
 
     if (user !== null) {
       fetchNotes();
@@ -88,7 +85,8 @@ function App() {
   async function register(username, password) {
     try {
       await axios.post(`${API_URL}/register`, { username, password });
-      console.log("User registered! Now login.");
+      setErrorMessage("");
+      setSuccessMessage("User registered! Now login.");
     } catch (error) {
       setErrorMessage(error.response?.data?.message || "Register failed");
     }
@@ -103,7 +101,7 @@ function App() {
       
       setUser(user);
       setErrorMessage("");
-      console.log("Logged in!");
+      setSuccessMessage("");
     } catch (error) {
       setErrorMessage(error.response?.data?.message || "Login failed");
     }
@@ -123,6 +121,7 @@ function App() {
           <input type="text" id="username" placeholder="Username" />
           <input type="password" id="password" placeholder="Password" />
           {errorMessage && <p className="error">{errorMessage}</p>} 
+          {successMessage && <p className="success">{successMessage}</p>} 
           <button className="login-button" onClick={() => login(document.getElementById("username").value, document.getElementById("password").value)}>
             Login
           </button>
