@@ -10,8 +10,9 @@ const API_URL = "http://localhost:4000";
 function App() {
   const [notes, setNotes] = useState([]);
   const [user, setUser] = useState(null);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
-  // Pobieramy token z localStorage
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
@@ -31,25 +32,21 @@ function App() {
   useEffect(() => {
     async function fetchNotes() {
       try {
-        const token = localStorage.getItem("token"); // Pobranie tokena
-        console.log("Token wysyłany do API:", token);
+        const token = localStorage.getItem("token");
     
         const response = await axios.get("http://localhost:4000/posts", {
           headers: {
-            Authorization: `Bearer ${token}`, // Wysyłanie tokena w nagłówku
+            Authorization: `Bearer ${token}`,
           },
         });
     
-        console.log("Notatki pobrane:", response.data);
         setNotes(response.data);
       } catch (error) {
         console.error("Error fetching notes:", error);
       }
     }
 
-    console.log(user);
-
-    if (user !== null) {  // Sprawdzenie czy user istnieje
+    if (user !== null) {
       fetchNotes();
     }
 
@@ -88,23 +85,25 @@ function App() {
   async function register(username, password) {
     try {
       await axios.post(`${API_URL}/register`, { username, password });
-      console.log("User registered! Now login.");
+      setErrorMessage("");
+      setSuccessMessage("User registered! Now login.");
     } catch (error) {
-      console.error("Error registering user:", error);
+      setErrorMessage(error.response?.data?.message || "Register failed");
     }
   }
 
   async function login(username, password) {
     try {
-      const response = await axios.post(`${API_URL}/login`, { username, password });    
+      const response = await axios.post(`${API_URL}/login`, { username, password });
+  
+      const { token, user } = response.data;
+      localStorage.setItem("token", token);
       
-      const { token, user } = response.data;  // Pobranie tokena i użytkownika
-      localStorage.setItem("token", token);   // Zapis tokena
-
       setUser(user);
-      console.log("Logged in!");
+      setErrorMessage("");
+      setSuccessMessage("");
     } catch (error) {
-      console.error("Error logging in:", error);
+      setErrorMessage(error.response?.data?.message || "Login failed");
     }
   }
 
@@ -121,6 +120,8 @@ function App() {
         <div className="login-area">
           <input type="text" id="username" placeholder="Username" />
           <input type="password" id="password" placeholder="Password" />
+          {errorMessage && <p className="error">{errorMessage}</p>} 
+          {successMessage && <p className="success">{successMessage}</p>} 
           <button className="login-button" onClick={() => login(document.getElementById("username").value, document.getElementById("password").value)}>
             Login
           </button>
