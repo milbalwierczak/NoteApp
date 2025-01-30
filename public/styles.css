@@ -152,3 +152,11 @@ form.create-note button {
   margin-top: 15px;
   color: #fff;
 }
+
+.error {
+  color: red;
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 5px;
+  text-align: center;
+}

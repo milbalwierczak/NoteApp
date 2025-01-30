@@ -42,12 +42,28 @@ function authenticateToken(req, res, next) {
 // Rejestracja
 app.post("/register", async (req, res) => {
   const { username, password } = req.body;
-  const hashedPassword = await bcrypt.hash(password, 10);
+
+  if (!username || !password) {
+    return res.status(400).json({ message: "Username and password are required" });
+  }
 
   try {
-    const result = await db.query("INSERT INTO users (username, password) VALUES ($1, $2) RETURNING id, username", [username, hashedPassword]);
-    res.json(result.rows[0]);
+    const existingUser = await db.query("SELECT * FROM users WHERE username = $1", [username]);
+
+    if (existingUser.rows.length > 0) {
+      return res.status(409).json({ message: "Username already taken" });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const result = await db.query(
+      "INSERT INTO users (username, password) VALUES ($1, $2) RETURNING id, username",
+      [username, hashedPassword]
+    );
+
+    res.status(201).json({ message: "User registered successfully", user: result.rows[0] });
   } catch (error) {
+    console.error("Error registering user:", error);
     res.status(500).json({ message: "Error registering user" });
   }
 });

@@ -10,6 +10,7 @@ const API_URL = "http://localhost:4000";
 function App() {
   const [notes, setNotes] = useState([]);
   const [user, setUser] = useState(null);
+  const [errorMessage, setErrorMessage] = useState("");
 
   // Pobieramy token z localStorage
   useEffect(() => {
@@ -90,21 +91,22 @@ function App() {
       await axios.post(`${API_URL}/register`, { username, password });
       console.log("User registered! Now login.");
     } catch (error) {
-      console.error("Error registering user:", error);
+      setErrorMessage(error.response?.data?.message || "Register failed");
     }
   }
 
   async function login(username, password) {
     try {
-      const response = await axios.post(`${API_URL}/login`, { username, password });    
+      const response = await axios.post(`${API_URL}/login`, { username, password });
+  
+      const { token, user } = response.data;
+      localStorage.setItem("token", token);
       
-      const { token, user } = response.data;  // Pobranie tokena i użytkownika
-      localStorage.setItem("token", token);   // Zapis tokena
-
       setUser(user);
+      setErrorMessage("");
       console.log("Logged in!");
     } catch (error) {
-      console.error("Error logging in:", error);
+      setErrorMessage(error.response?.data?.message || "Login failed");
     }
   }
 
@@ -121,6 +123,7 @@ function App() {
         <div className="login-area">
           <input type="text" id="username" placeholder="Username" />
           <input type="password" id="password" placeholder="Password" />
+          {errorMessage && <p className="error">{errorMessage}</p>} 
           <button className="login-button" onClick={() => login(document.getElementById("username").value, document.getElementById("password").value)}>
             Login
           </button>
