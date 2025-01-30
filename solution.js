@@ -41,24 +41,24 @@ function authenticateToken(req, res, next) {
 
 // User register
 app.post("/register", async (req, res) => {
-  const { username, password } = req.body;
+  const {userData} = req.body;
 
-  if (!username || !password) {
+  if (!userData || !userData.username || !userData.password) {
     return res.status(400).json({ message: "Username and password are required" });
   }
 
   try {
-    const existingUser = await db.query("SELECT * FROM users WHERE username = $1", [username]);
+    const existingUser = await db.query("SELECT * FROM users WHERE username = $1", [userData.username]);
 
     if (existingUser.rows.length > 0) {
       return res.status(409).json({ message: "Username already taken" });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(userData.password, 10);
 
     const result = await db.query(
       "INSERT INTO users (username, password) VALUES ($1, $2) RETURNING id, username",
-      [username, hashedPassword]
+      [userData.username, hashedPassword]
     );
 
     res.status(201).json({ message: "User registered successfully", user: result.rows[0] });
@@ -71,20 +71,20 @@ app.post("/register", async (req, res) => {
 // Logging in user
 app.post("/login", async (req, res) => {
 
-  const { username, password } = req.body;
-  if (!username || !password) {
+  const {userData} = req.body;
+  if (!userData || !userData.username || !userData.password) {
     return res.status(400).json({ message: "Username and password are required" });
   }
 
   try {
-    const user = await db.query("SELECT * FROM users WHERE username = $1", [username]);
+    const user = await db.query("SELECT * FROM users WHERE username = $1", [userData.username]);
 
     if (user.rows.length === 0) {
       console.log("User not found");
       return res.status(401).json({ message: "Invalid username or password" });
     }
 
-    const isValid = await bcrypt.compare(password, user.rows[0].password);
+    const isValid = await bcrypt.compare(userData.password, user.rows[0].password);
     if (!isValid) {
       console.log("Invalid password");
       return res.status(401).json({ message: "Invalid username or password" });

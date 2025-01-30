@@ -3,6 +3,7 @@ import Header from "./Header";
 import Footer from "./Footer";
 import Note from "./Note";
 import CreateArea from "./CreateArea";
+import Login from "./Login";
 import axios from "axios";
 
 const API_URL = "http://localhost:4000";
@@ -82,9 +83,9 @@ function App() {
     }
   }
 
-  async function register(username, password) {
+  async function register(userData) {
     try {
-      await axios.post(`${API_URL}/register`, { username, password });
+      await axios.post(`${API_URL}/register`, {userData});
       setErrorMessage("");
       setSuccessMessage("User registered! Now login.");
     } catch (error) {
@@ -92,9 +93,9 @@ function App() {
     }
   }
 
-  async function login(username, password) {
+  async function login(userData) {
     try {
-      const response = await axios.post(`${API_URL}/login`, { username, password });
+      const response = await axios.post(`${API_URL}/login`, {userData});
   
       const { token, user } = response.data;
       localStorage.setItem("token", token);
@@ -117,18 +118,7 @@ function App() {
     <div>
       <Header />
       {!user ? (
-        <div className="login-area">
-          <input type="text" id="username" placeholder="Username" />
-          <input type="password" id="password" placeholder="Password" />
-          {errorMessage && <p className="error">{errorMessage}</p>} 
-          {successMessage && <p className="success">{successMessage}</p>} 
-          <button className="login-button" onClick={() => login(document.getElementById("username").value, document.getElementById("password").value)}>
-            Login
-          </button>
-          <button onClick={() => register(document.getElementById("username").value, document.getElementById("password").value)}>
-            Register
-          </button>
-        </div>
+        <Login onLogin={login} onRegister={register} errorMessage={errorMessage} successMessage={successMessage}/>
       ) : (
         <div>
           <button className="logout-button" onClick={logout}>Logout</button>
