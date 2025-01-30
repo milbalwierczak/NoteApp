@@ -118,11 +118,10 @@ function App() {
     <div>
       <Header />
       {!user ? (
-        <div>
-          <h2>Login</h2>
+        <div className="login-area">
           <input type="text" id="username" placeholder="Username" />
           <input type="password" id="password" placeholder="Password" />
-          <button onClick={() => login(document.getElementById("username").value, document.getElementById("password").value)}>
+          <button className="login-button" onClick={() => login(document.getElementById("username").value, document.getElementById("password").value)}>
             Login
           </button>
           <button onClick={() => register(document.getElementById("username").value, document.getElementById("password").value)}>
@@ -131,7 +130,7 @@ function App() {
         </div>
       ) : (
         <div>
-          <button onClick={logout}>Logout</button>
+          <button className="logout-button" onClick={logout}>Logout</button>
           <CreateArea onAdd={addNote} />
           {notes.map((noteItem) => (
             <Note key={noteItem.id} id={noteItem.id} title={noteItem.title} content={noteItem.content} onDelete={deleteNote} />
